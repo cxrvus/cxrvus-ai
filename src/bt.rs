@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 enum State { Fail, Pass, Wait, Error(String) }
 
 #[derive(Debug)]
@@ -32,24 +32,26 @@ impl<T> Node<T> {
 
 mod branch_funcs {
 	use super::*;
+	use State::*;
 
 	pub fn sequence<T>(children: &[Node<T>], board: &T) -> State {
-		for child in children {
-			match child.tick(board) {
-				State::Pass => continue,
-				other => return other,
-			}
-		}
-		State::Pass
+		continue_on(State::Pass, children, board)
 	}
 
 	pub fn fallback<T>(children: &[Node<T>], board: &T) -> State {
-		for child in children {
-			match child.tick(board) {
-				State::Fail => continue,
-				other => return other,
-			}
-		}
-		State::Fail
+		continue_on(State::Fail, children, board)
 	}
+
+	pub fn continue_on<T>(cont_state: State, children: &[Node<T>], board: &T) -> State {
+		for child in children {
+			let child_state = child.tick(board);
+			if child_state == cont_state { continue; }
+			else { return child_state;}
+		}
+		return cont_state
+	}
+}
+
+fn main () {
+
 }
