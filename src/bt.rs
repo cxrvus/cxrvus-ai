@@ -25,6 +25,7 @@ impl<T> Node<T> {
 		}
 	}
 
+
     fn sequence(children: Vec<Node<T>>) -> Self { Node::Branch(children, branch_funcs::sequence) }
 
     fn fallback(children: Vec<Node<T>>) -> Self { Node::Branch(children, branch_funcs::fallback) }
@@ -32,11 +33,14 @@ impl<T> Node<T> {
     fn passer(children: Vec<Node<T>>) -> Self { Node::Branch(children, branch_funcs::passer) }
 
     fn inverter(child: Node<T>) -> Self { Node::Branch(vec![child], branch_funcs::inverter) }
+
+    fn random(children: Vec<Node<T>>) -> Self { Node::Branch(children, branch_funcs::random) }
 }
 
 mod branch_funcs {
 	use super::*;
 	use State::*;
+	use rand::{Rng, thread_rng};
 
 
 	pub fn sequence<T>(children: &Vec<Node<T>>, board: &T) -> State {
@@ -70,6 +74,13 @@ mod branch_funcs {
 			Fail => Pass,
 			other => other
 		}	
+	}
+
+
+	pub fn random<T>(children: &Vec<Node<T>>, board: &T) -> State {
+		let mut rng = thread_rng();
+		let index = rng.gen_range(0..children.len());
+		children[index].tick(board)
 	}
 }
 
