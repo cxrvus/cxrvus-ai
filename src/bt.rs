@@ -35,11 +35,11 @@ mod branch_funcs {
 	use State::*;
 
 	pub fn sequence<T>(children: &[Node<T>], board: &T) -> State {
-		continue_on(State::Pass, children, board)
+		continue_on(Pass, children, board)
 	}
 
 	pub fn fallback<T>(children: &[Node<T>], board: &T) -> State {
-		continue_on(State::Fail, children, board)
+		continue_on(Fail, children, board)
 	}
 
 	pub fn continue_on<T>(cont_state: State, children: &[Node<T>], board: &T) -> State {
