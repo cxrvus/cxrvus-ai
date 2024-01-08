@@ -28,11 +28,16 @@ impl<T> Node<T> {
     fn sequence(children: Vec<Node<T>>) -> Self { Node::Branch(children, branch_funcs::sequence) }
 
     fn fallback(children: Vec<Node<T>>) -> Self { Node::Branch(children, branch_funcs::fallback) }
+
+    fn passer(children: Vec<Node<T>>) -> Self { Node::Branch(children, branch_funcs::passer) }
+
+    fn inverter(child: Node<T>) -> Self { Node::Branch(vec![child], branch_funcs::inverter) }
 }
 
 mod branch_funcs {
 	use super::*;
 	use State::*;
+
 
 	pub fn sequence<T>(children: &[Node<T>], board: &T) -> State {
 		continue_on(Pass, children, board)
@@ -42,13 +47,27 @@ mod branch_funcs {
 		continue_on(Fail, children, board)
 	}
 
-	pub fn continue_on<T>(cont_state: State, children: &[Node<T>], board: &T) -> State {
+	fn continue_on<T>(cont_state: State, children: &[Node<T>], board: &T) -> State {
 		for child in children {
 			let child_state = child.tick(board);
 			if child_state == cont_state { continue; }
 			else { return child_state;}
 		}
 		return cont_state
+	}
+
+
+	pub fn passer<T>(children: &[Node<T>], board: &T) -> State {
+		for child in children { child.tick(board); };
+		return Pass;
+	}
+
+	pub fn inverter<T>(children: &[Node<T>], board: &T) -> State {
+		match children[0].tick(board) {
+			Pass => Fail,
+			Fail => Pass,
+			other => other
+		}	
 	}
 }
 
