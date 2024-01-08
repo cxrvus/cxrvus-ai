@@ -4,7 +4,7 @@ use std::collections::HashMap;
 enum State { Fail, Pass, Wait, Error(String) }
 
 #[derive(Debug)]
-enum Node<T> { Branch(Vec<Node<T>>, fn(&[Node<T>], &T) -> State), Leaf(fn(&T) -> State) }
+enum Node<T> { Branch(Vec<Node<T>>, fn(&Vec<Node<T>>, &T) -> State), Leaf(fn(&T) -> State) }
 
 enum Value { String(String), Number(i32), Bool(bool) }
 
@@ -13,7 +13,7 @@ type BlackBoard = HashMap<String, Value>;
 impl<T> Node<T> {
     fn tick(&self, board: &T) -> State {
         match self {
-            Node::Branch(children, func) => func(children.as_slice(), board),
+            Node::Branch(children, func) => func(children, board),
             Node::Leaf(func) => func(board),
         }
     }
@@ -39,15 +39,15 @@ mod branch_funcs {
 	use State::*;
 
 
-	pub fn sequence<T>(children: &[Node<T>], board: &T) -> State {
+	pub fn sequence<T>(children: &Vec<Node<T>>, board: &T) -> State {
 		continue_on(Pass, children, board)
 	}
 
-	pub fn fallback<T>(children: &[Node<T>], board: &T) -> State {
+	pub fn fallback<T>(children: &Vec<Node<T>>, board: &T) -> State {
 		continue_on(Fail, children, board)
 	}
 
-	fn continue_on<T>(cont_state: State, children: &[Node<T>], board: &T) -> State {
+	fn continue_on<T>(cont_state: State, children: &Vec<Node<T>>, board: &T) -> State {
 		for child in children {
 			let child_state = child.tick(board);
 			if child_state == cont_state { continue; }
@@ -57,12 +57,12 @@ mod branch_funcs {
 	}
 
 
-	pub fn passer<T>(children: &[Node<T>], board: &T) -> State {
+	pub fn passer<T>(children: &Vec<Node<T>>, board: &T) -> State {
 		for child in children { child.tick(board); };
 		return Pass;
 	}
 
-	pub fn inverter<T>(children: &[Node<T>], board: &T) -> State {
+	pub fn inverter<T>(children: &Vec<Node<T>>, board: &T) -> State {
 		match children[0].tick(board) {
 			Pass => Fail,
 			Fail => Pass,
