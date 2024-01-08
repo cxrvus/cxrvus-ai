@@ -58,7 +58,9 @@ mod branch_funcs {
 
 
 	pub fn passer<T>(children: &Vec<Node<T>>, board: &T) -> State {
-		for child in children { child.tick(board); };
+		for child in children {
+			if let Error(error) = child.tick(board) { return Error(error); }
+		};
 		return Pass;
 	}
 
