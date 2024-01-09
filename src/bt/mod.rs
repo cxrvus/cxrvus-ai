@@ -92,3 +92,11 @@ impl<T> Node<T> {
 		}
 	}
 }
+
+
+#[macro_export]
+
+macro_rules! tree {
+	($t: ty, $x: expr) => { Root::<$t>(Box::new($x)) };
+}
+pub use tree;
