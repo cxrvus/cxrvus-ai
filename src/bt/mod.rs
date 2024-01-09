@@ -5,10 +5,10 @@ pub use State::*;
 
 
 #[derive(Debug, PartialEq)]
-enum State { Fail, Pass, Wait, Error(Option<String>) }
+pub enum State { Fail, Pass, Wait, Error(Option<String>) }
 
 #[derive(Debug)]
-enum Node<T> {
+pub enum Node<T> {
 	Leaf 		(LeafFunc<T>),
 	Flow 		(Vec<Node<T>>, FlowFunc<T>),
 	Sequence 	(Vec<Node<T>>),
