@@ -1,89 +1,110 @@
-use std::collections::HashMap;
+use std::ops::Deref;
+
+use rand::{Rng, thread_rng};
+
 
 #[derive(Debug, PartialEq)]
 enum State { Fail, Pass, Wait, Error(String) }
 
 #[derive(Debug)]
-enum Node<T> { Branch(Vec<Node<T>>, fn(&Vec<Node<T>>, &T) -> State), Leaf(fn(&T) -> State) }
+enum Node {
+	Sequence (Vec<Node>),
+	Fallback (Vec<Node>),
+	Passer (Vec<Node>),
+	Random (Vec<Node>),
 
-enum Value { String(String), Number(i32), Bool(bool) }
+	Inverter (Box<Node>),
 
-type BlackBoard = HashMap<String, Value>;
-
-impl<T> Node<T> {
-    fn tick(&self, board: &T) -> State {
-        match self {
-            Node::Branch(children, func) => func(children, board),
-            Node::Leaf(func) => func(board),
-        }
-    }
-
-	fn root_tick(&self, board: &T) -> String {
-		loop {
-			if let State::Error(error) = self.tick(board) {  }
-			else { continue; };
-		}
-	}
-
-
-    fn sequence(children: Vec<Node<T>>) -> Self { Node::Branch(children, branch_funcs::sequence) }
-
-    fn fallback(children: Vec<Node<T>>) -> Self { Node::Branch(children, branch_funcs::fallback) }
-
-    fn passer(children: Vec<Node<T>>) -> Self { Node::Branch(children, branch_funcs::passer) }
-
-    fn inverter(child: Node<T>) -> Self { Node::Branch(vec![child], branch_funcs::inverter) }
-
-    fn random(children: Vec<Node<T>>) -> Self { Node::Branch(children, branch_funcs::random) }
+	Flow (Vec<Node>, FlowFunc),
+	Leaf (LeafFunc),
 }
 
-mod branch_funcs {
-	use super::*;
-	use State::*;
-	use rand::{Rng, thread_rng};
 
 
-	pub fn sequence<T>(children: &Vec<Node<T>>, board: &T) -> State {
-		continue_on(Pass, children, board)
-	}
-
-	pub fn fallback<T>(children: &Vec<Node<T>>, board: &T) -> State {
-		continue_on(Fail, children, board)
-	}
-
-	fn continue_on<T>(cont_state: State, children: &Vec<Node<T>>, board: &T) -> State {
-		for child in children {
-			let child_state = child.tick(board);
-			if child_state == cont_state { continue; }
-			else { return child_state;}
-		}
-		return cont_state
-	}
+#[derive(Debug)]
+struct Tree<T> { root: Node, data: T }
 
 
-	pub fn passer<T>(children: &Vec<Node<T>>, board: &T) -> State {
-		for child in children {
-			if let Error(error) = child.tick(board) { return Error(error); }
+type FlowFunc = fn(&Vec<Node>) -> State;
+type LeafFunc = fn() -> State;
+
+use State::*;
+
+
+impl<T> Tree<T> {
+	pub fn tick(&self) -> State {
+		let mut data: T = self.data;
+		let mut stack: Vec<(Node, usize)> = vec![];
+		let mut state: State;
+
+
+		let push = |&node| { stack.push((node, 0)) };
+		let pop = || { stack.pop().expect("prevented by while") };
+		let peek = || { stack.last().expect("prevented by while") };
+		let cont = || {
+			let (x,i) = pop();
+			stack.push((x,i+1))
 		};
-		return Pass;
-	}
-
-	pub fn inverter<T>(children: &Vec<Node<T>>, board: &T) -> State {
-		match children[0].tick(board) {
-			Pass => Fail,
-			Fail => Pass,
-			other => other
-		}	
-	}
 
 
-	pub fn random<T>(children: &Vec<Node<T>>, board: &T) -> State {
-		let mut rng = thread_rng();
-		let index = rng.gen_range(0..children.len());
-		children[index].tick(board)
+		let sequence: FlowFunc = |nodes| {
+			continue_on(Pass, nodes)
+		};
+
+		let fallback: FlowFunc = |nodes| {
+			continue_on(Fail, nodes)
+		};
+
+		// let continue_on = |nodes: &Vec<Node>, cont_state: State| {
+		// 	for node in nodes {
+		// 		let child_state = node.tick();
+		// 		if child_state == cont_state { continue; }
+		// 		else { return child_state;}
+		// 	}
+		// 	return cont_state
+		// };
+
+
+		let passer: FlowFunc = |nodes| {
+			for node in nodes {
+				if let Error(error) = node.tick() { return Error(error); }
+			};
+			return Pass;
+		};
+
+		let inverter = |node: &Node| {
+			match node.tick() {
+				Pass => Fail,
+				Fail => Pass,
+				other => other
+			}	
+		};
+
+
+		let random: FlowFunc = |nodes| {
+			let mut rng = thread_rng();
+			let index = rng.gen_range(0..nodes.len());
+			nodes[index].tick()
+		};
+
+		while let Some((node, i)) = stack.last() {
+			state = match node {
+				Node::Sequence(nodes) => sequence(&nodes),
+				Node::Fallback(nodes) => fallback(&nodes),
+				Node::Passer(nodes) => passer(&nodes),
+				Node::Random(nodes) => random(&nodes),
+				Node::Inverter(node) => inverter(node.deref()),
+				_ => Error("unhandled node type".into())
+			}
+		}
+
+		Error("".into())
 	}
 }
+
+
+
+struct BB { thirst_level: u8, pee_level: u8 }
 
 fn main () {
-
 }
