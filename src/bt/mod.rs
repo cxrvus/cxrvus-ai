@@ -20,9 +20,9 @@ pub enum Node<T> {
 }
 
 
-type FlowFunc<T> = fn(&Vec<Node<T>>, data: &T) -> State;
-type DecFunc<T> = fn(&Node<T>, data: &T) -> State;
-type LeafFunc<T> = fn(data: &T) -> State;
+pub type FlowFunc<T> = fn(&Vec<Node<T>>, data: &T) -> State;
+pub type DecFunc<T> = fn(&Node<T>, data: &T) -> State;
+pub type LeafFunc<T> = fn(data: T) -> State;
 
 
 impl<T> Node<T> {
