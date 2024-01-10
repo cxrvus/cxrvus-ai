@@ -32,7 +32,6 @@ pub fn main () {
 
 	let pee: LeafFunc<T> = |data| {
 		let decr = random();
-		// TODO: fix mutability
 		if data.bladder >= decr { data.bladder -= decr; }
 		Wait
 	};
