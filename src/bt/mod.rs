@@ -10,6 +10,7 @@ pub enum State { Fail, Pass, Wait, Error(Option<String>) }
 #[derive(Debug)]
 pub enum Node<T> {
 	Leaf 		(LeafFunc<T>),
+	Check 		(CheckFunc<T>),
 	Flow 		(Vec<Node<T>>, FlowFunc<T>),
 	Sequence 	(Vec<Node<T>>),
 	Fallback 	(Vec<Node<T>>),
@@ -23,6 +24,7 @@ pub enum Node<T> {
 pub type FlowFunc<T> = fn(&Vec<Node<T>>, data: &mut T) -> State;
 pub type DecFunc<T> = fn(&Node<T>, data: &mut T) -> State;
 pub type LeafFunc<T> = fn(data: &mut T) -> State;
+pub type CheckFunc<T> = fn(data: &mut T) -> bool;
 
 
 impl<T> Node<T> {
@@ -82,6 +84,7 @@ impl<T> Node<T> {
 
 		match self {
 			Node::Leaf(func) => func(data),
+			Node::Check(func) => if func(data) { Pass } else { Fail },
 			Node::Flow(nodes, func) => func(nodes, data),
 			Node::Sequence(nodes) => sequence(nodes, data),
 			Node::Fallback(nodes) => fallback(nodes, data),
