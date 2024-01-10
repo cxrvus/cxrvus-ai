@@ -22,7 +22,7 @@ pub enum Node<T> {
 
 pub type FlowFunc<T> = fn(&Vec<Node<T>>, data: &T) -> State;
 pub type DecFunc<T> = fn(&Node<T>, data: &T) -> State;
-pub type LeafFunc<T> = fn(data: T) -> State;
+pub type LeafFunc<T> = fn(data: &T) -> State;
 
 
 impl<T> Node<T> {
@@ -64,7 +64,7 @@ impl<T> Node<T> {
 			}
 		};
 
-		let inverter = |node: &Node<T>, data: &T| -> State {
+		let inverter: DecFunc<T> = |node, data| {
 			match node.tick(&data) {
 				Pass => Fail,
 				Fail => Pass,
@@ -81,7 +81,7 @@ impl<T> Node<T> {
 
 
 		match self {
-			Node::Leaf(func) => func(data),
+			Node::Leaf(func) => func(&data),
 			Node::Flow(nodes, func) => func(nodes, data),
 			Node::Sequence(nodes) => sequence(nodes, data),
 			Node::Fallback(nodes) => fallback(nodes, data),
