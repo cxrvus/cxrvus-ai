@@ -1,22 +1,22 @@
+use std::default;
+
 use rand::{Rng, thread_rng};
 use crate::bt::*;
 
 
-#[derive(Debug)]
-enum PersonState { Drinking, NeedToPee, Waiting, Pissing, Thirsty }
+#[derive(Debug, Default)]
+enum PersonState {
+	#[default]
+	Drinking,
+	NeedToPee, Waiting, Pissing, Thirsty
+}
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 struct BlackBoard {
 	state: PersonState,
 	thirst: u8,
 	bladder: u8,
 	occupied: bool
-}
-
-impl BlackBoard {
-	fn default () -> Self {
-		Self { state: PersonState::Drinking, thirst: 100, bladder: 0, occupied: false }
-	}
 }
 
 
